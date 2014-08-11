@@ -9,7 +9,7 @@
 #include <dirent.h>
 #include <sys/inotify.h>
 
-#include "logs.c"
+#include "logs.h"
 
 #define WATCH_FLAGS IN_CREATE|IN_DELETE|IN_MODIFY|IN_MOVE_SELF|IN_MOVED_FROM|IN_MOVED_TO
 

@@ -1,31 +1,56 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <libssh/libssh.h>
+#include <libssh/sftp.h>
+
 #include "logs.h"
+#include "fmond_plugin.h"
 
 
-struct fmplug_ssh_t {
-	ssh_session *sess;
-	sftp_session *sftp;
-};
+typedef struct fmplug_ssh_t {
+	ssh_session sess;
+	sftp_session sftp;
+} fmplug_ctx_t;
 
-#define ssh_ctx fmplug_ssh_t
 
-void cleanup(ssh_ctx *ctx)
+void cleanup(fmplug_ssh_t *ctx)
 {
+	sftp_free(ctx->sftp);
+	ssh_disconnect(ctx->sess);
+	ssh_free(ctx->sess);
 
 }
 
-static void *init (char *host, char *user, char *password, int port)
+int directory_update (char *path, uint32_t mask)
 {
-	struct ssh_ctx *ctx;
+	return 0;
+}
 
-	ctx = malloc(sizeof(struct ssh_ctx));
+int file_update (char *path, uint32_t mask)
+{
+	return 0;
+}
+
+fmond_plugin_t *init ()
+{
+	char *host, *user, *password;
+	int port;
+
+	fmplug_ssh_t *ctx;
+	fmond_plugin_t *plugin_ctx;
+
+	host = "localhost";
+	user = "fmond";
+	password = "fmond";
+
+	plugin_ctx = malloc(sizeof(fmond_plugin_t));
+	ctx = malloc(sizeof(fmplug_ssh_t));
 
 	if (!(ctx->sess = ssh_new()))
 		goto err;
 
-	ssh_options_set(ctx->sess, SSH_OPTIONS_HOST, av[1]);
-	ssh_options_set(ctx->sess, SSH_OPTIONS_USER, av[2]);
+	ssh_options_set(ctx->sess, SSH_OPTIONS_HOST, host);
+	ssh_options_set(ctx->sess, SSH_OPTIONS_USER, user);
 
 	if (ssh_connect(ctx->sess) != SSH_OK)
 		goto conn_err;
@@ -41,12 +66,10 @@ static void *init (char *host, char *user, char *password, int port)
 sftp_err:
 	sftp_free(ctx->sftp);
 conn_err:
-	ssh_disconnect(ctx->);
+	ssh_disconnect(ctx->sess);
 err:
-	if (sess)
-			fprintf(stderr,"error connecting %s: %s\n",ssh_get_error(sess));
-
-	ssh_free(sess);
+	fprintf(stderr,"ssh error:  %s\n",ssh_get_error(ctx->sess));
+	ssh_free(ctx->sess);
 	return NULL;
 }
 
